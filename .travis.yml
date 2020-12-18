@@ -6,6 +6,13 @@
 #            - ubuntu-toolchain-r-test
 #        packages:
 #            - openvpn
+dist: focal
+
+jobs:
+  - arch: amd64
+  - group: edge
+    virt: vm
+    arch: arm64-graviton2
 
 services:
     - docker
@@ -28,6 +35,14 @@ before_script:
 script:
     - official-images/test/run.sh "$image"
     - test/run.sh "$image"
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    - if [ "${TRAVIS_CPU_ARCH}" == "arm64" ]; then
+      docker tag $image:latest odidev/openvpn:$TRAVIS_BRANCH-arm64;
+      docker push odidev/openvpn:$TRAVIS_BRANCH-arm64;
+      else
+      docker tag $image:latest odidev/openvpn:$TRAVIS_BRANCH;
+      docker push odidev/openvpn:$TRAVIS_BRANCH;
+      fi
 
 after_script:
     - docker images
